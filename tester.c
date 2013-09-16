@@ -7,8 +7,8 @@ clock_t start, stop; /* clock_t is a built-in type for processor time (ticks) */
 #include "searchAlgo.h"
 
 int main(int argc, char *argv[]) {
-	if (argc != 4) {
-		printf("Usage: tester size target K, size is the size of array, and target is the number you want to find, K is the repetition index.\n");
+	if (argc != 5) {
+		printf("Usage: tester size target K func, \n\"size\" is the size of array, \n\"target\" is the number you want to find, \n\"K\" is the repetition index, \n\"func\" tells the program which function to call, feed the program with number 1 2 3 4\n");
 		return 0;
 	}
 	int size = atoi(argv[1]);
@@ -18,21 +18,22 @@ int main(int argc, char *argv[]) {
 	for ( ; i < 10000; i++) array[i] = -1;
 	int target = atoi(argv[2]);
 	int K = atoi(argv[3]);
-
-	double duration; /* records the run time (seconds) of a function */
+	char c = *(char *)argv[4];
 	/* clock() returns the amount of processor time (ticks) that has elapsed
 	since the program began running */
 	start = clock(); /* records the ticks at the beginning of the function call */
-	//function(); /* run your function here */
 	int ret;
 	for (i = 0; i < K; i++) {
-		ret = binaryRecur(array, 0, size, target);
-//		ret = sequenRecur(array, 0, size, target);
-//		ret = binaryItera(array, size, target);
-//		ret = sequenItera(array, size, target);
+		switch (c) {
+		case '1': ret = binaryRecur(array, 0, size, target); break;
+		case '2': ret = sequenRecur(array, 0, size, target); break;
+		case '3': ret = binaryItera(array, size, target); break;
+		case '4': ret = sequenItera(array, size, target); break;
+		}
 	}
 	stop = clock(); /* records the ticks at the end of the function call */
-	duration = ((double)(stop - start))/CLK_TCK;
+	double total = (double)(stop - start) / CLK_TCK;
+	double duration = total / K; /* records the run time (seconds) of a function */
 	/* CLK_TCK is a built-in constant = ticks per second */
-	printf("%f\n", duration);
+	printf("%d\n%ld\n%.9lf\n%.9lf\n", K, stop - start, total, duration);
 }
