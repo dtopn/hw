@@ -4,13 +4,32 @@
 
 using namespace std;
 
-
 typedef struct node {
 	node* left;
 	node* right;
 	int data;
 } Node;
 typedef Node* Tree;
+
+Tree ins(Tree t, int i) {
+	Tree T = t;
+	Node** prv = NULL;
+	while (t != NULL) {
+		if (i < t->data) {
+			prv = &(t->left);
+			t = t->left;
+		}
+		else if (i > t->data) {
+			prv = &(t->right);
+			t = t->right;
+		}
+	}
+	*prv = (Node*) malloc(sizeof(Node));
+	t = *prv;
+	t->data = i;
+	t->right = t->left = NULL;
+	return T;
+}
 
 int main() {
 	int N, L;
@@ -25,10 +44,10 @@ int main() {
 		cin >> temp;
 		b0 = ins(b0, temp);
 	}
-	string 
-	while (L--) {
-			
-	}
+	string b0s;
+		while (L--) {
+
+		}
 
 	return 0;
 }
