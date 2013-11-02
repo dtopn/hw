@@ -12,6 +12,7 @@ int main() {
 	//cin >> N;
 	scanf("%d", &N);
 	n = N;
+	while(n) {
 	int *result, *heap, *test;
 	result = (int *) malloc (n * sizeof(int));
 	heap = (int *) malloc (n * sizeof(int));
@@ -52,6 +53,9 @@ int main() {
 				printf("%d%c", *tmp, '\n');
 			*tmp = -1; poped++;
 		}
+	}
+	scanf("%d", &N);
+	n = N;
 	}
 	return 0;
 }
