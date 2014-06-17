@@ -7,13 +7,20 @@
 #include <linux/rtc.h>*/
 #include <time.h>
 
+#include <pthread.h>
+
 /* Intruoduce Token structure */
 #include "Token.h"
+
+void *thread_routine(void* arg) {
+	printf("Inside newly created thread \n");
+}
 
 int main(int argc, char **argv)
 {
 	int fd1, fd2, res;
 	char buff [1024];
+	//TODO: remove string buff
 	struct Token token_buff;
 	int i = 0;
 

@@ -1,7 +1,8 @@
 KDIR:=/opt/clanton-full/1.4.2/sysroots/i586-poky-linux/usr/src/kernel
-KDIR_LOCAL:=/usr/src/kernels/2.6.32-431.20.3.el6.x86_64
+#KDIR_LOCAL:=/usr/src/kernels/2.6.32-431.20.3.el6.x86_64
+KDIR_LOCAL:=/usr/src/kernel
 
-#PWD:= $(shell pwd)
+PWD:= $(shell pwd)
 
 #CC = i586-poky-linux-gcc
 CC = gcc
