@@ -24,20 +24,29 @@ void *send_msg(void* arg) {
 	int buff_len;
 	char buff [81];
 
+	int create_new = 1;
 	cnt = 0;
 	do {
 		if (pthread_mutex_trylock (&queue_mutex) != EBUSY) {
 			buff_len = rand() % 71 + 10;
-			for (i = 0; i < buff_len; ++i) {
-				switch (rand() % 3) {
-					case 0: buff[i] = rand() % 26 + 'A'; break;
-					case 1: buff[i] = rand() % 26 + 'a'; break;
-					case 2: buff[i] = rand() % 10 + '0'; break;
+			if (create_new) {
+				for (i = 0; i < buff_len; ++i) {
+					switch (rand() % 3) {
+						case 0: buff[i] = rand() % 26 + 'A'; break;
+						case 1: buff[i] = rand() % 26 + 'a'; break;
+						case 2: buff[i] = rand() % 10 + '0'; break;
+					}
 				}
+				buff[buff_len] = '\0';
 			}
-			buff[buff_len] = '\0';
 			res = write(fd, buff, strlen(buff)+1);
-			cnt++;
+			if (res != -1) {
+				cnt++;
+				create_new = 1;
+			}
+			else {
+				create_new = 0;
+			}
 			pthread_mutex_unlock (&queue_mutex);
 		}
 		/* I'd like to take a nap */
