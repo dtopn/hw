@@ -9,11 +9,13 @@
 
 #include <pthread.h>
 
+
 /* Intruoduce Token structure */
 #include "Token.h"
 
 void *thread_routine(void* arg) {
-	printf("Inside newly created thread \n");
+	int i = 10;
+	
 }
 
 int main(int argc, char **argv)
@@ -39,12 +41,25 @@ int main(int argc, char **argv)
 	}else{
 		if(strcmp("show", argv[1]) == 0){
 			//memset(buff, 0, 1024);
-			res = read(fd1, &token_buff, sizeof(struct Token));
-			printf("'%d %d %s'\n", token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
-			res = read(fd2, &token_buff, sizeof(struct Token));
-			printf("'%d %d %s'\n", token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
-			sleep(1);
-			//ss
+			res = 0;
+			while (1) {
+				res = read(fd1, &token_buff, sizeof(struct Token));
+				if (res != -1) {
+					printf("'dev1 %lld %lld %s'\n", token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+				}
+				else break;
+			}
+			res = 0;
+			while (1) {
+				res = read(fd2, &token_buff, sizeof(struct Token));
+				if (res != -1) {
+					printf("'dev2 %lld %lld %s'\n", token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+				}
+				else break;
+				//printf("'%d %d %d %d %s'\n", token_buff.in_stamp_h, token_buff.in_stamp_l,
+				//							 token_buff.out_stamp_h, token_buff.out_stamp_l, token_buff.msg);
+				//if there is no byte read		
+			}
 		}else if(strcmp("write1", argv[1]) == 0){
 			memset(buff, 0, 1024);
 			if(argc >= 3){

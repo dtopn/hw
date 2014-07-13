@@ -6,10 +6,10 @@ A plethora of homework here
 Acronyms
 ----
 
-_ds_: Data Structure and Advanced Data Structure
+__ds__: Data Structure and Advanced Data Structure
 
-_ld_: Logic and Computer Design Fundamentals (LCDF)
+__ld__: Logic and Computer Design Fundamentals (LCDF)
 
-_na_: Numerical Analysis
+__na__: Numerical Analysis
 
-_ga_: Intel Galileo board development, summer course 2014, namely Embedded System Programming
+__ga__: Intel Galileo board development, summer course 2014, namely Embedded System Programming

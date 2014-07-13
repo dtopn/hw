@@ -16,6 +16,8 @@
 #include <linux/init.h>
 #include <linux/moduleparam.h>
 
+#include <asm/msr.h>
+
 //#include <linux/hpet.h>
 
 #define DEVICE_NAME                 "Squeue"  // device name to be created and registered
@@ -32,7 +34,7 @@ struct Squeue_dev {
 	int mutex_lock; 		/* Mutex lock */
 	//TODO: use kernel mux
 	int queue_size;			/* Size of the queue */
-	char in_string[256];
+	//char in_string[256];
 	int current_write_pointer;
 	int current_read_pointer;
 } *Squeue_devp1, *Squeue_devp2;
@@ -92,6 +94,7 @@ ssize_t Squeue_driver_write(struct file *file, const char *buf,
 	if (QUEUE_LENGTH == Squeue_devp->queue_size) {
 		/* Queue is full */
 		printk("Queue is full"); //TODO: add identifier
+		*mutex_lockp = 0; /* Release lock */
 		return -1;
 	}
 	else {
@@ -106,12 +109,12 @@ ssize_t Squeue_driver_write(struct file *file, const char *buf,
 				Squeue_devp->current_write_pointer = 0;
 		}
 	}*/
-	/* Truncate size to 80 */
-	if (count > 80) count = 80;
+	/* Truncate size to MAX_TOKEN_MSG_LEN */
+	if (count > MAX_TOKEN_MSG_LEN) count = MAX_TOKEN_MSG_LEN;
 	bytes_fail = copy_from_user(tokenp->msg, buf, count);
 	tokenp->msg[count] = '\0'; /* Terminate string */
-	//TODO: add time
 
+	rdtscll(tokenp->in_stamp); /* Get in-queue time stamp */
 
 	printk("Written -- %d %s \n", Squeue_devp->current_write_pointer, tokenp->msg);
 	/* Increase pointer, counter */
@@ -147,6 +150,7 @@ ssize_t Squeue_driver_read(struct file *file, char *buf,
 		bytes_read++;
 	}*/
 	tokenp = Squeue_devp->token_queue + Squeue_devp->current_read_pointer;
+	rdtscll(tokenp->out_stamp); /* Get out-queue time stamp */
 	bytes_fail = copy_to_user(buf, tokenp, count);
 
 	printk("Read from %s -- '%s'\n", Squeue_devp->name, tokenp->msg);
@@ -221,8 +225,8 @@ int __init Squeue_driver_init(void)
 	Squeue_dev_device = device_create(Squeue_dev_class, NULL, MKDEV(MAJOR(Squeue_dev_number), 2), NULL, Squeue_devp2->name);	
 	// device_create_file(Squeue_dev_device, &dev_attr_xxx);
 
-	memset(Squeue_devp1->in_string, 0, 256);
-	memset(Squeue_devp2->in_string, 0, 256);
+	//memset(Squeue_devp1->in_string, 0, 256);
+	//memset(Squeue_devp2->in_string, 0, 256);
 	
 	time_since_boot=(jiffies-INITIAL_JIFFIES)/HZ;//since on some systems jiffies is a very huge uninitialized value at boot and saved.
 	//printk(Squeue_devp->in_string, "Hi %s, this machine has been on for %d seconds", user_name, time_since_boot);
