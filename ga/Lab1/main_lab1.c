@@ -52,45 +52,52 @@ struct fd_pack
 	int fd2;
 };
 
-// void *read_msg(void* arg) {
+void *read_msg(void* arg) {
 	
-// 	int cnt, i, res;
-// 	int nap_time;
-// 	int buff_len;
-// 	char buff [81];
+	int cnt, i, res;
+	int nap_time;
+	int buff_len;
+	char buff [81];
+	struct Token token_buff;
 
-// 	/* Pass file descripter into fd1, fd2 */
-// 	int fdp = (struct fd_pack*)arg;
-// 	inr fd1, fd2;
-// 	fd1 = fdp->fd1;
-// 	fd2 = fdp->fd2;
+	/* Pass file descripter into fd1, fd2 */
+	struct fd_pack *fdp = (struct fd_pack*)arg;
+	int fd1, fd2;
+	fd1 = fdp->fd1;
+	fd2 = fdp->fd2;
 
-// 	res = 0;
-// 	while (1) {
-// 		res = read(fd1, &token_buff, sizeof(struct Token));
-// 		/* Read until empty */
-// 		if (res != -1) {
-// 			printf("'dev1 %d %lld %lld %s'\n", token_buff.id, 
-// 				token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
-// 		}
-// 		else break;
-// 	}
-// 	res = 0;
-// 	while (1) {
-// 		res = read(fd2, &token_buff, sizeof(struct Token));
-// 		/* Read until empty */
-// 		if (res != -1) {
-// 			printf("'dev2 %d %lld %lld %s'\n", token_buff.id, 
-// 				token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
-// 		}
-// 		else break;
-// 		//printf("'%d %d %d %d %s'\n", token_buff.in_stamp_h, token_buff.in_stamp_l,
-// 		//							 token_buff.out_stamp_h, token_buff.out_stamp_l, token_buff.msg);
-// 		//if there is no byte read		
-// 	}
-// 	/* I'd like to take a nap */
-// 	usleep(rand() % 9 + 1);
-// }
+	int old_cancel_state;
+	while(1) {
+		pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancel_state);
+		res = 0;
+		while (1) {
+			res = read(fd1, &token_buff, sizeof(struct Token));
+			/* Read until empty */
+			if (res != -1) {
+				printf("'dev1 %d %lld %lld %s'\n", token_buff.id, 
+					token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+			}
+			else break;
+		}
+		res = 0;
+		while (1) {
+			res = read(fd2, &token_buff, sizeof(struct Token));
+			/* Read until empty */
+			if (res != -1) {
+				printf("'dev2 %d %lld %lld %s'\n", token_buff.id, 
+					token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+			}
+			else break;
+			//printf("'%d %d %d %d %s'\n", token_buff.in_stamp_h, token_buff.in_stamp_l,
+			//							 token_buff.out_stamp_h, token_buff.out_stamp_l, token_buff.msg);
+			//if there is no byte read		
+		}
+		/* I'd like to take a nap */
+		usleep(rand() % 9 + 1);
+		pthread_setcancelstate (old_cancel_state, NULL); // Safer than ENABLE
+		pthread_testcancel();
+	}
+}
 
 
 int main(int argc, char **argv)
@@ -190,6 +197,10 @@ int main(int argc, char **argv)
 			pthread_create (&thread4_id, NULL, &send_msg, &fd2);
 			pthread_create (&thread5_id, NULL, &send_msg, &fd2);
 			pthread_create (&thread6_id, NULL, &send_msg, &fd2);
+
+			struct fd_pack fds = {fd1, fd2};
+			pthread_t thread0_id;
+			pthread_create (&thread0_id, NULL, &read_msg, &fds);
 
 			pthread_join (thread1_id, NULL);
 			pthread_join (thread2_id, NULL);
