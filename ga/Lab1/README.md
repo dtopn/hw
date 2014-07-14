@@ -2,7 +2,7 @@
 ====
 Cross-compile
 ----
-1. `source` the enviroment set-up script.
+1. `source` the enviroment setup script.
 2. `cd` into the the `Lab1` directory.
 3. Fire the `make` command.
 4. Copy the binary to the target device.
@@ -26,6 +26,10 @@ Native-build
 	+ The log file contains `sort`ed result, as you can observe, _id_ numbers are sequential 
 	+ and the *line count* number in _count.log_ is always _600_
 
+4. Clean up
+====
+1. Remove kernel module by `rmmod Squeue`.
+2. Clean the directory by `make clean` .
 * * *
 
 Tao J  
