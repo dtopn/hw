@@ -45,6 +45,8 @@ static struct device *Squeue_dev_device;
 
 static char *user_name = "Yuanzhang Hao";
 
+static int id_global = 0;
+
 module_param(user_name,charp,0000);	//to get parameter from load.sh script to greet the user
 
 /*
@@ -115,7 +117,7 @@ ssize_t Squeue_driver_write(struct file *file, const char *buf,
 	tokenp->msg[count] = '\0'; /* Terminate string */
 
 	rdtscll(tokenp->in_stamp); /* Get in-queue time stamp */
-
+	tokenp->id = id_global++; /* Get global incremental id of this Token */
 	printk("Written -- %d %s \n", Squeue_devp->current_write_pointer, tokenp->msg);
 	/* Increase pointer, counter */
 	Squeue_devp->queue_size++;

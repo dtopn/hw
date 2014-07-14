@@ -14,7 +14,7 @@
 /* Intruoduce Token structure */
 #include "Token.h"
 
-
+#define ENQUQUE_LEN 100
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void *send_msg(void* arg) {
@@ -28,8 +28,8 @@ void *send_msg(void* arg) {
 	cnt = 0;
 	do {
 		if (pthread_mutex_trylock (&queue_mutex) != EBUSY) {
-			buff_len = rand() % 71 + 10;
 			if (create_new) {
+				buff_len = rand() % 71 + 10;
 				for (i = 0; i < buff_len; ++i) {
 					switch (rand() % 3) {
 						case 0: buff[i] = rand() % 26 + 'A'; break;
@@ -51,12 +51,11 @@ void *send_msg(void* arg) {
 		}
 		/* I'd like to take a nap */
 		usleep(rand() % 9 + 1);
-	} while (cnt < 100);
+	} while (cnt < ENQUQUE_LEN);
 	return 0;
 }
 
-struct fd_pack
-{
+struct fd_pack {
 	int fd1;
 	int fd2;
 };
@@ -74,38 +73,45 @@ void *read_msg(void* arg) {
 	int fd1, fd2;
 	fd1 = fdp->fd1;
 	fd2 = fdp->fd2;
-
+	cnt = 0;
 	int old_cancel_state;
-	while(1) {
+	while(cnt < ENQUQUE_LEN * 6) {
 		pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancel_state);
-		res = 0;
-		while (1) {
-			res = read(fd1, &token_buff, sizeof(struct Token));
-			/* Read until empty */
-			if (res != -1) {
-				printf("'dev1 %d %lld %lld %s'\n", token_buff.id, 
-					token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+		if (pthread_mutex_trylock (&queue_mutex) != EBUSY) {
+			res = 0;
+			while (1) {
+				res = read(fd1, &token_buff, sizeof(struct Token));
+				/* Read until empty */
+				if (res != -1) {
+					cnt++;
+					printf("'%d %lld %lld dev1: %s'\n", token_buff.id, 
+						token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+				}
+				else break;
 			}
-			else break;
-		}
-		res = 0;
-		while (1) {
-			res = read(fd2, &token_buff, sizeof(struct Token));
-			/* Read until empty */
-			if (res != -1) {
-				printf("'dev2 %d %lld %lld %s'\n", token_buff.id, 
-					token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+			res = 0;
+			while (1) {
+				res = read(fd2, &token_buff, sizeof(struct Token));
+				/* Read until empty */
+				if (res != -1) {
+					cnt++;
+					printf("'%d %lld %lld dev2: %s'\n", token_buff.id, 
+						token_buff.in_stamp, token_buff.out_stamp, token_buff.msg);
+				}
+				else break;
+				//printf("'%d %d %d %d %s'\n", token_buff.in_stamp_h, token_buff.in_stamp_l,
+				//							 token_buff.out_stamp_h, token_buff.out_stamp_l, token_buff.msg);
+				//if there is no byte read		
 			}
-			else break;
-			//printf("'%d %d %d %d %s'\n", token_buff.in_stamp_h, token_buff.in_stamp_l,
-			//							 token_buff.out_stamp_h, token_buff.out_stamp_l, token_buff.msg);
-			//if there is no byte read		
+			
+			pthread_mutex_unlock (&queue_mutex);
+			pthread_setcancelstate (old_cancel_state, NULL); // Safer than ENABLE
 		}
 		/* I'd like to take a nap */
 		usleep(rand() % 9 + 1);
-		pthread_setcancelstate (old_cancel_state, NULL); // Safer than ENABLE
 		pthread_testcancel();
 	}
+	return 0;
 }
 
 
@@ -217,6 +223,8 @@ int main(int argc, char **argv)
 			pthread_join (thread4_id, NULL);
 			pthread_join (thread5_id, NULL);
 			pthread_join (thread6_id, NULL);
+
+			pthread_join (thread0_id, NULL);
 		}
 		/* close devices */
 		close(fd1);
