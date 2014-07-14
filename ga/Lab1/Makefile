@@ -18,7 +18,7 @@ obj-m:= Squeue.o
 
 all:
 	make ARCH=x86 CROSS_COMPILE=i586-poky-linux- -C $(KDIR) M=$(PWD) modules
-	i586-poky-linux-gcc -o $(APP) main_lab1.c --sysroot=$(SROOT)
+	i586-poky-linux-gcc -o $(APP) main_lab1.c --sysroot=$(SROOT) -lpthread
 local: app
 	make -C $(KDIR_LOCAL) M=$(PWD) modules
 app:
