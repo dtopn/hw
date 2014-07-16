@@ -19,25 +19,21 @@
 #include <errno.h>
 #include <sys/time.h>
 
+#include <pthread.h>
 
 extern void hpet_fasync();
-#define TIMEOUT 5
+#define TIMEOUT 20
 #define CLICK_INTERVAL 200000
 jmp_buf env;
 
-#define MOUSEFILE "/dev/input/event3"
-int main () {
-	int fd;
+#define MOUSEFILE "/dev/input/event2"
+void *detect (void *arg) {
+	int fd = *(int *)arg;
 	struct input_event ie;
 	struct timeval tv;
 	fd_set readfds;
 	int ret;
 
-	/* Open evdev file */
-	if((fd = open(MOUSEFILE, O_RDONLY)) == -1) {
-		perror("opening device");
-		exit(EXIT_FAILURE);
-	}
 	/* Wait on mouse event for input. */
 	FD_ZERO(&readfds);		// Clear fds
 	
@@ -60,11 +56,12 @@ int main () {
 		if (ret == -1) {
 			// select error occured
 			perror ("Cannot select");
-			return 1;
+			return NULL;
 		} else if (!ret) {
 			// return 0 no event
 			printf ("%d seconds elapsed. Nothing happend\n", TIMEOUT);
-			return 0;
+			close(fd);
+			return NULL;
 		}
 
 		// At least one event can be read from device without blocking
@@ -82,6 +79,9 @@ int main () {
 				prv_click.tv_sec = 0;
 				prv_click.tv_usec = 0;
 
+				close(fd);
+				// Perform async jump
+				longjmp(env ,1);
 			}
 			else {
 				prv_click.tv_sec = ie.time.tv_sec;
@@ -89,87 +89,48 @@ int main () {
 			}
 		}
 	}
-
-
-	return 0;
-	hpet_fasync();
+	close(fd);
+	return NULL;
 }
 
-static int hpet_sigio_count;
+pthread_t tid;
 
-static void
-hpet_sigio(int val)
-{
-	printf("Signal handler called\n"); 
-	longjmp(env,1); 
-}
+int main (int argc, const char** argv) {
 
-void
-hpet_fasync()
-{
-	unsigned long		freq = 1;
-	int			fd, value;
-	sig_t			oldsig;
-	struct hpet_info	info;
-	int i, j;
+	int i, j, ret;
 
-	hpet_sigio_count = 0;
-	fd = -1;
-
-	if ((oldsig = signal(SIGIO, hpet_sigio)) == SIG_ERR) {
-		fprintf(stderr, "hpet_fasync: failed to set signal handler\n");
-		return;
+	// Handle program arguments
+	char evdev_file[80] = MOUSEFILE;
+	if (1 == argc) {
+		printf("Using default mouse event file %s\n", evdev_file);
+		printf("If the program misbehaves, try ./this_execuatable other_evdev_path\n");
+	} 
+	else if (2 == argc) {
+		printf("Using custom mouse event file: %s\n", argv[1]);
+		sprintf(evdev_file, "%s", argv[1]);
 	}
 
-	// Open h High Precision E Timer
-	fd = open("/dev/hpet", O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "hpet_fasync: failed to open hpet\n");
-		return;
-	}
-	
-	// Set Device Control
-	if ((fcntl(fd, F_SETOWN, getpid()) == 1) ||
-		((value = fcntl(fd, F_GETFL)) == 1) ||
-		(fcntl(fd, F_SETFL, value | O_ASYNC) == 1)) {
-		fprintf(stderr, "hpet_fasync: fcntl failed\n");
-		goto out;
+
+	/* Open evdev file */
+	int fd;
+	if((fd = open(evdev_file, O_RDONLY)) == -1) {
+		printf("Error opening device\n");
+		exit(EXIT_FAILURE);
 	}
 
-	freq = 1;
-	if (ioctl(fd, HPET_IRQFREQ, freq) < 0) {
-		fprintf(stderr, "hpet_fasync: HPET_IRQFREQ failed\n");
-		goto out;
+	// Create thread
+	ret = pthread_create(&tid, NULL, detect, (void *)&fd);
+	if (-1 == ret) {
+		printf("Cannot create thread\n");
+		return 1;
 	}
 
-	if (ioctl(fd, HPET_INFO, &info) < 0) {
-		fprintf(stderr, "hpet_fasync: failed to get info\n");
-		goto out;
-	}
-
-	//fprintf(stderr, "hpet_fasync: info.hi_flags 0x%lx\n", info.hi_flags);
-
-	if (info.hi_flags && (ioctl(fd, HPET_EPI, 0) < 0)) {
-		fprintf(stderr, "hpet_fasync: HPET_EPI failed\n");
-		goto out;
-	}
-
-	if (ioctl(fd, HPET_IE_ON, 0) < 0) {
-		fprintf(stderr, "hpet_fasync, HPET_IE_ON failed\n");
-		goto out;
-	}
-	
 	//Main Computation here
  	if (setjmp(env)!=0) {
- 		printf("One second passed: j=%d,i=%d\n",j,i); exit(1);
+ 		printf("Right button double clicked: j=%d,i=%d\n",j,i);
+ 		return 1;
  	} 
  	for (j = 0; j < 10000; j++) for (i = 0; i < 1000000; i++);
 
-out:
-	signal(SIGIO, oldsig);
-
-	if (fd >= 0)
-		close(fd);
-
-	return;
+	return 0;
 }
