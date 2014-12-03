@@ -36,15 +36,11 @@ int main(int argc, char*argv[]) {
     exit(0);
 }
 
-int inc_counter () {
+int inc_lock_counter () {
 
-    do {
-        if (pthread_mutex_trylock (&counter_mutex) != EBUSY) {
-            ++counter;
-            pthread_mutex_unlock (&counter_mutex);
-            break;
-        }
-    } while (1);
+    // try to lock, blocking
+    pthread_mutex_lock (&counter_mutex);
+    ++counter;
 
     return counter;
 }
@@ -53,19 +49,21 @@ int inc_counter () {
 void thread1(void*arg) {
     int i, val;
     for (i = 1; i <= 5; i++) {
-        val = inc_counter();
+        val = inc_lock_counter();
 
         /*LINE A*/
         printf("thread 1 iter%d lineA counter=%d \n", i, counter);
 
         /*睡眠或挂起*/
         // micro second
-        usleep(100000);
+        usleep(1000);
 
         /*LINE B*/
         printf("thread 1 iter%d lineB counter=%d \n", i, counter);
 
         counter = val;
+        pthread_mutex_unlock (&counter_mutex);
+        usleep(rand() % 137);
     }
 }
 
@@ -73,13 +71,15 @@ void thread1(void*arg) {
 void thread2(void*arg) {
     int i, val;
     for (i = 1; i <= 5; i++) {
-        val = inc_counter();
+        val = inc_lock_counter();
 
         /*睡眠或挂起*/
-        usleep(9000);
+        usleep(1000);
 
         printf("thread 2 iter%d       counter=%d \n", i, counter);
 
         counter = val;
+        pthread_mutex_unlock (&counter_mutex);
+        usleep(rand() % 13);
     }
 }
