@@ -23,7 +23,7 @@ int main(int argc, char*argv[]) {
 
 
     /*打印counter最后的值*/
-    printf("最后的counter值为%d \n", counter);
+    printf("before exit counter=%d \n", counter);
 
     exit(0);
 }
@@ -35,13 +35,13 @@ void thread1(void*arg) {
         val = ++counter;
 
         /*LINE A*/
-        printf("第1个线程：第%d次循环，第1次引用counter=%d \n", i, counter);
+        printf("thread 1 iter%d lineA counter=%d \n", i, counter);
 
         /*睡眠或挂起300毫秒钟*/
         usleep(300);
 
         /*LINE B*/
-        printf("第1个线程：第%d次循环，第2次引用counter=%d \n", i, counter);
+        printf("thread 1 iter%d lineB counter=%d \n", i, counter);
 
         counter = val;
     }
@@ -56,7 +56,7 @@ void thread2(void*arg) {
         /*睡眠或挂起100毫秒钟*/
         usleep(100);
 
-        printf("第2个线程：第%d次循环，counter=%d \n", i, counter);
+        printf("thread 2 iter%d       counter=%d \n", i, counter);
 
         counter = val;
     }
