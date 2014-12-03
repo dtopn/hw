@@ -2,14 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// EBUSY
+#include <errno.h>
+
 int counter = 0; /*两个线程都能访问的共享变量 */
 
 void thread1(void*arg);
 void thread2(void*arg);
 
+// shared mutex variable
+pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char*argv[]) {
     pthread_t id1, id2;
 
+    pthread_mutex_t mutex;
+    pthread_mutex_init (&mutex, NULL);
     /*创建第1个线程*/
     pthread_create( & id1, NULL, (void*)thread1, NULL);
 
@@ -28,17 +36,31 @@ int main(int argc, char*argv[]) {
     exit(0);
 }
 
+int inc_counter () {
+
+    do {
+        if (pthread_mutex_trylock (&counter_mutex) != EBUSY) {
+            ++counter;
+            pthread_mutex_unlock (&counter_mutex);
+            break;
+        }
+    } while (1);
+
+    return counter;
+}
+
 /*第1个线程执行代码*/
 void thread1(void*arg) {
     int i, val;
     for (i = 1; i <= 5; i++) {
-        val = ++counter;
+        val = inc_counter();
 
         /*LINE A*/
         printf("thread 1 iter%d lineA counter=%d \n", i, counter);
 
-        /*睡眠或挂起300毫秒钟*/
-        usleep(300);
+        /*睡眠或挂起*/
+        // micro second
+        usleep(100000);
 
         /*LINE B*/
         printf("thread 1 iter%d lineB counter=%d \n", i, counter);
@@ -51,10 +73,10 @@ void thread1(void*arg) {
 void thread2(void*arg) {
     int i, val;
     for (i = 1; i <= 5; i++) {
-        val = ++counter;
+        val = inc_counter();
 
-        /*睡眠或挂起100毫秒钟*/
-        usleep(100);
+        /*睡眠或挂起*/
+        usleep(9000);
 
         printf("thread 2 iter%d       counter=%d \n", i, counter);
 
