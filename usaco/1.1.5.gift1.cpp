@@ -16,18 +16,18 @@ int main() {
     int num;
     fin >> num;
     for (int i = 0; i < num; i++){
-    	fin >> name[i];
+        fin >> name[i];
     }
     for (int i = 0; i < 6 && group[i] != 0; ++i)
     {
-    	pdt_gr *= 1 + group[i] - 'A';
+        pdt_gr *= 1 + group[i] - 'A';
     }
     if (pdt_gr % 47 - pdt_cm % 47 == 0)
     {
-    	fout << "GO" << endl;
+        fout << "GO" << endl;
     }
     else{
-    	fout << "STAY" << endl;
+        fout << "STAY" << endl;
     }
     return 0;
 }
