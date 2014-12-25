@@ -1,0 +1,4 @@
+# force crlf line ending for 80386 assembly files
+*.asm text eol=crlf
+*.ASM text eol=crlf
+*.txt text eol=crlf
