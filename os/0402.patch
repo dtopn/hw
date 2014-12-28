@@ -1,0 +1,109 @@
+From 3e040dbd3303bdf50f2b6d07a8207949a2d74c5d Mon Sep 17 00:00:00 2001
+From: Tao J <taoj@you.know.it>
+Date: Wed, 24 Dec 2014 12:07:09 +0800
+Subject: [PATCH 3/3] Modify makefiles and default config
+
+modify magic number to 0x040c
+purge mknod function of yzzext2
+---
+ arch/x86/configs/x86_64_defconfig               | 4 ++++
+ fs/Kconfig                                      | 1 +
+ fs/Makefile                                     | 1 +
+ fs/yzzext2/namei.c                              | 4 ++++
+ include/asm-generic/bitops.h                    | 1 +
+ include/asm-generic/bitops/ext2-atomic-setbit.h | 2 ++
+ include/uapi/linux/magic.h                      | 1 +
+ 7 files changed, 14 insertions(+)
+
+diff --git a/arch/x86/configs/x86_64_defconfig b/arch/x86/configs/x86_64_defconfig
+index c1119d4..d784571 100644
+--- a/arch/x86/configs/x86_64_defconfig
++++ b/arch/x86/configs/x86_64_defconfig
+@@ -263,6 +263,10 @@ CONFIG_EFI_VARS=y
+ CONFIG_EXT4_FS=y
+ CONFIG_EXT4_FS_POSIX_ACL=y
+ CONFIG_EXT4_FS_SECURITY=y
++# YZZEXT2
++CONFIG_YZZEXT2_FS=y
++CONFIG_YZZEXT2_FS_POSIX_ACL=y
++CONFIG_YZZEXT2_FS_SECURITY=y
+ CONFIG_QUOTA=y
+ CONFIG_QUOTA_NETLINK_INTERFACE=y
+ # CONFIG_PRINT_QUOTA_WARNING is not set
+diff --git a/fs/Kconfig b/fs/Kconfig
+index 7385e54..a5c15c1 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -11,6 +11,7 @@ config DCACHE_WORD_ACCESS
+ if BLOCK
+ 
+ source "fs/ext2/Kconfig"
++source "fs/yzzext2/Kconfig"
+ source "fs/ext3/Kconfig"
+ source "fs/ext4/Kconfig"
+ 
+diff --git a/fs/Makefile b/fs/Makefile
+index 47ac07b..6292169 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -67,6 +67,7 @@ obj-$(CONFIG_EXT2_FS)		+= ext2/
+ # We place ext4 after ext2 so plain ext2 root fs's are mounted using ext2
+ # unless explicitly requested by rootfstype
+ obj-$(CONFIG_EXT4_FS)		+= ext4/
++obj-$(CONFIG_YZZEXT2_FS)		+= yzzext2/
+ obj-$(CONFIG_JBD)		+= jbd/
+ obj-$(CONFIG_JBD2)		+= jbd2/
+ obj-$(CONFIG_CRAMFS)		+= cramfs/
+diff --git a/fs/yzzext2/namei.c b/fs/yzzext2/namei.c
+index 21eb59c..7e3bfe7 100644
+--- a/fs/yzzext2/namei.c
++++ b/fs/yzzext2/namei.c
+@@ -144,6 +144,10 @@ static int yzzext2_tmpfile(struct inode *dir, struct dentry *dentry, umode_t mod
+ 
+ static int yzzext2_mknod (struct inode * dir, struct dentry *dentry, umode_t mode, dev_t rdev)
+ {
++
++    printk(KERN_ERR"I don't know why mknod is not supported, but it is..");
++    return -EPERM;
++
+ 	struct inode * inode;
+ 	int err;
+ 
+diff --git a/include/asm-generic/bitops.h b/include/asm-generic/bitops.h
+index 280ca7a..fded1d5 100644
+--- a/include/asm-generic/bitops.h
++++ b/include/asm-generic/bitops.h
+@@ -40,5 +40,6 @@
+ #include <asm-generic/bitops/non-atomic.h>
+ #include <asm-generic/bitops/le.h>
+ #include <asm-generic/bitops/ext2-atomic.h>
++#include <asm-generic/bitops/yzzext2-atomic.h>
+ 
+ #endif /* __ASM_GENERIC_BITOPS_H */
+diff --git a/include/asm-generic/bitops/ext2-atomic-setbit.h b/include/asm-generic/bitops/ext2-atomic-setbit.h
+index 5a09978..ce65879 100644
+--- a/include/asm-generic/bitops/ext2-atomic-setbit.h
++++ b/include/asm-generic/bitops/ext2-atomic-setbit.h
+@@ -7,5 +7,7 @@
+ 
+ #define ext2_set_bit_atomic(l, nr, addr)	test_and_set_bit_le(nr, addr)
+ #define ext2_clear_bit_atomic(l, nr, addr)	test_and_clear_bit_le(nr, addr)
++#define yzzext2_set_bit_atomic(l, nr, addr)	test_and_set_bit_le(nr, addr)
++#define yzzext2_clear_bit_atomic(l, nr, addr)	test_and_clear_bit_le(nr, addr)
+ 
+ #endif /* _ASM_GENERIC_BITOPS_EXT2_ATOMIC_SETBIT_H_ */
+diff --git a/include/uapi/linux/magic.h b/include/uapi/linux/magic.h
+index 77c6031..66a0c81 100644
+--- a/include/uapi/linux/magic.h
++++ b/include/uapi/linux/magic.h
+@@ -19,6 +19,7 @@
+ #define ECRYPTFS_SUPER_MAGIC	0xf15f
+ #define EFS_SUPER_MAGIC		0x414A53
+ #define EXT2_SUPER_MAGIC	0xEF53
++#define YZZEXT2_SUPER_MAGIC	0x040C
+ #define EXT3_SUPER_MAGIC	0xEF53
+ #define XENFS_SUPER_MAGIC	0xabba1974
+ #define EXT4_SUPER_MAGIC	0xEF53
+-- 
+2.1.0
+
